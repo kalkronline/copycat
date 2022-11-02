@@ -1,8 +1,6 @@
 use clap::Parser;
 use std::{env, fs, path::Path};
 
-mod kitty;
-
 #[derive(Parser)]
 #[command(version)]
 /// Manage duplicate images
@@ -49,9 +47,9 @@ fn main() {
     let dir = Path::new(&args.path);
     env::set_current_dir(dir).unwrap();
 
-    let options = kitty::Options::new()
-        .uses_stow(!args.no_cache)
+    let options = copycat::Options::new()
+        .use_cache(!args.no_cache)
         .distance(args.distance);
 
-    kitty::run(options).unwrap();
+    copycat::run(options).unwrap();
 }
