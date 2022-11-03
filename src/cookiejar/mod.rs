@@ -27,6 +27,7 @@ where
 
 pub struct CookieJar<G: Gramma> {
     file: File,
+    saves: bool,
     gramma: G,
     jar: Vec<G::Cookie>,
 }
@@ -39,34 +40,49 @@ impl<G: Gramma> CookieJar<G> {
             .create(true)
             .open(at)?;
 
-        let text = {
-            let mut output = String::new();
-            BufReader::new(&file).read_to_string(&mut output).unwrap();
-            output
-        };
+        let mut text = String::new();
+        BufReader::new(&file).read_to_string(&mut text).unwrap();
 
         let mut jar = Vec::new();
-
         for line in text.split('\n') {
             if let Some(cookie) = gramma.cookie(line) {
                 jar.push(cookie);
             }
         }
 
-        Ok(Self { file, gramma, jar })
+        let saves = true;
+
+        Ok(Self {
+            file,
+            gramma,
+            jar,
+            saves,
+        })
     }
 
     pub fn add(&mut self, cookie: G::Cookie) {
         self.jar.push(cookie);
     }
 
-    pub fn taste_test(&self) -> Box<dyn Iterator<Item = G::Unique> + '_> {
+    pub fn no_save(&mut self) {
+        self.saves = false;
+    }
+
+    pub fn clear(&mut self) {
+        self.jar = Vec::new();
+    }
+
+    pub fn taste(&self) -> Box<dyn Iterator<Item = G::Unique> + '_> {
         Box::new(self.jar.iter().map(|cookie| self.gramma.taste(cookie)))
     }
 }
 
 impl<G: Gramma> Drop for CookieJar<G> {
     fn drop(&mut self) {
+        if !self.saves {
+            return;
+        }
+
         let mut leftovers = Vec::new();
 
         for cookie in std::mem::take(&mut self.jar) {

@@ -30,7 +30,7 @@ impl Options {
     }
 }
 
-pub fn hash(opts: Options) -> anyhow::Result<()> {
+fn hash(opts: Options) -> anyhow::Result<()> {
     let style =
         ProgressStyle::with_template("{elapsed_precise} {bar:40.white/black} {pos}/{len} {msg}")
             .unwrap()
@@ -38,11 +38,9 @@ pub fn hash(opts: Options) -> anyhow::Result<()> {
 
     let mut cheetah = Cheetah::new(Path::new("./").into());
 
-    if opts.use_cache {
-        cheetah.exclude_cache();
-    }
+    cheetah.use_cache(opts.use_cache);
 
-    let progress = ProgressBar::new(cheetah.todo_len() as u64);
+    let progress = ProgressBar::new(cheetah.len() as u64);
     progress.set_style(style);
 
     cheetah.hash(|hash| {

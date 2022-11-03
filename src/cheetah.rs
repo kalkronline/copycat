@@ -13,7 +13,7 @@ pub struct Cheetah {
 
 impl Cheetah {
     pub fn new(mut path: PathBuf) -> Self {
-        let mut links = Lynx::new(&path);
+        let mut links = Lynx::new(&path).unwrap();
         path.push(".x3c");
         links.exclude(&path);
         let cookiejar = CookieJar::new(path, HashGramma).unwrap();
@@ -21,21 +21,27 @@ impl Cheetah {
         Self { links, cookiejar }
     }
 
-    pub fn todo_len(&mut self) -> usize {
-        self.links = self.links.compute(HashCookie::new).unwrap();
-        self.links.size().unwrap()
+    pub fn len(&mut self) -> usize {
+        self.links.compute(HashCookie::new);
+        self.links.size()
     }
 
-    pub fn exclude_cache(&mut self) {
-        self.links.exclude_many(self.cookiejar.taste_test());
+    pub fn use_cache(&mut self, bool: bool) {
+        // cookiejar probably should be an outside thing
+        if bool {
+            self.links.exclude_many(self.cookiejar.taste());
+        } else {
+            self.cookiejar.clear();
+            self.cookiejar.no_save();
+        }
     }
 
-    pub fn hash<F>(mut self, progress: F)
+    pub fn hash<F>(&mut self, progress: F)
     where
         F: Fn(&Option<ImageHash>) + Sync,
     {
-        self.links = self.links.compute(HashCookie::new).unwrap_or(self.links);
-        let mut cookies = self.links.results().unwrap();
+        self.links.compute(HashCookie::new);
+        let mut cookies = self.links.consume();
 
         let hasher = HasherConfig::new().to_hasher();
 
