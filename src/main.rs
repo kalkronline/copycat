@@ -1,11 +1,11 @@
-use clap::Parser;
 use std::{env, fs, path::Path};
+
+use clap::Parser;
 
 #[derive(Parser)]
 #[command(version)]
 /// Manage duplicate images
 struct Args {
-    #[arg(value_parser = check_path)]
     /// The target image directory
     path: String,
     #[arg(short, long)]
@@ -16,40 +16,12 @@ struct Args {
     distance: u32,
 }
 
-fn check_path(path: &str) -> Result<String, String> {
-    let metadata = fs::metadata(path);
-
-    if metadata.is_err() {
-        if std::path::Path::new(path).exists() {
-            return Err(format!("insufficient permissions for {}", path)); // cannot call metadata
-        } else {
-            return Err(format!("{} does not exist!", path)); // path doesn't exist
-        }
-    }
-
-    let metadata = metadata.unwrap();
-
-    if !metadata.is_dir() {
-        return Err(format!("{} is not a directory!", path)); // path is not a directory
-    }
-
-    if fs::read_dir(path).is_err() {
-        // is there a way to do this without fs::read_dir ?
-        return Err(format!("insufficient permissions for {}", path)); // user does not have permissions
-    }
-
-    Ok(path.to_owned())
-}
-
 fn main() {
     let args = Args::parse();
-
-    let dir = Path::new(&args.path);
-    env::set_current_dir(dir).unwrap();
 
     let options = copycat::Options::new()
         .use_cache(!args.no_cache)
         .distance(args.distance);
 
-    copycat::run(options).unwrap();
+    copycat::run(&args.path, options).unwrap();
 }

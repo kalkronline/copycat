@@ -1,5 +1,6 @@
-use image_hasher::{Hasher, ImageHash};
 use std::path::{Path, PathBuf};
+
+use image_hasher::{Hasher, ImageHash};
 
 pub struct HashGramma;
 
@@ -10,7 +11,6 @@ pub struct HashCookie {
 
 impl super::Gramma for HashGramma {
     type Cookie = HashCookie;
-    type Unique = PathBuf;
 
     fn cookie(&self, kvstring: &str) -> Option<Self::Cookie> {
         let mut parts = kvstring.split(" // ");
@@ -27,10 +27,6 @@ impl super::Gramma for HashGramma {
         } else {
             None
         }
-    }
-
-    fn taste(&self, cookie: &Self::Cookie) -> Self::Unique {
-        cookie.path.clone()
     }
 
     fn devour(&self, cookie: Self::Cookie) -> Option<String> {

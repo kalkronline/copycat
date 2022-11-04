@@ -4,36 +4,24 @@ use rayon::prelude::*;
 use crate::cookiejar::{CookieJar, HashCookie, HashGramma};
 use crate::lynx::Lynx;
 
-use std::path::PathBuf;
-
-pub struct Cheetah {
-    cookiejar: CookieJar<HashGramma>,
+pub struct Cheetah<'a> {
+    cookiejar: &'a mut CookieJar<HashGramma>,
     links: Lynx<HashCookie>,
 }
 
-impl Cheetah {
-    pub fn new(mut path: PathBuf) -> Self {
-        let mut links = Lynx::new(&path).unwrap();
-        path.push(".x3c");
-        links.exclude(&path);
-        let cookiejar = CookieJar::new(path, HashGramma).unwrap();
+/// Hash files fastly
+impl<'a> Cheetah<'a> {
+    pub fn new(cookiejar: &'a mut CookieJar<HashGramma>) -> anyhow::Result<Self> {
+        let mut links = Lynx::new("./")?;
+        links.exclude("./.x3c");
+        links.exclude_many(cookiejar.jar().iter().map(|cookie| &cookie.path));
 
-        Self { links, cookiejar }
+        Ok(Self { links, cookiejar })
     }
 
     pub fn len(&mut self) -> usize {
         self.links.compute(HashCookie::new);
         self.links.size()
-    }
-
-    pub fn use_cache(&mut self, bool: bool) {
-        // cookiejar probably should be an outside thing
-        if bool {
-            self.links.exclude_many(self.cookiejar.taste());
-        } else {
-            self.cookiejar.clear();
-            self.cookiejar.no_save();
-        }
     }
 
     pub fn hash<F>(&mut self, progress: F)

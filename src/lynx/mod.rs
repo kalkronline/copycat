@@ -1,8 +1,8 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use self::Lynx::{Done, Res, Todo};
 use iter::LynxIter;
-use Lynx::{Done, Res, Todo};
 
 mod iter;
 
@@ -34,7 +34,7 @@ impl<T> Lynx<T> {
     /// Modifies the `Todo` iterator by adding items to its exclude list.
     ///
     /// Panics when `self` is not `Todo`.
-    pub fn exclude_many<P: AsRef<Path>, I: Iterator<Item = P>>(&mut self, paths: I) {
+    pub fn exclude_many<P: AsRef<Path>, I: IntoIterator<Item = P>>(&mut self, paths: I) {
         match self {
             Todo(iter) => {
                 for path in paths {

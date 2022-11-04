@@ -3,23 +3,17 @@ use std::hash::Hash;
 use std::io::{self, BufReader, Read, Seek, Write};
 use std::path::Path;
 
-mod hashcookie;
 pub use hashcookie::{HashCookie, HashGramma};
+
+mod hashcookie;
 
 /// A gramma creates cookies by providing methods which
 /// convert a pair of strings to and from cookies.
-pub trait Gramma
-where
-    Self::Unique: Hash + Eq,
-{
+pub trait Gramma {
     type Cookie;
-    type Unique;
 
     /// creates a cookie from a string
     fn cookie(&self, string: &str) -> Option<Self::Cookie>;
-
-    /// gets some part of a cookie
-    fn taste(&self, cookie: &Self::Cookie) -> Self::Unique;
 
     /// turns a cookie into a string
     fn devour(&self, cookie: Self::Cookie) -> Option<String>;
@@ -27,7 +21,6 @@ where
 
 pub struct CookieJar<G: Gramma> {
     file: File,
-    saves: bool,
     gramma: G,
     jar: Vec<G::Cookie>,
 }
@@ -40,49 +33,35 @@ impl<G: Gramma> CookieJar<G> {
             .create(true)
             .open(at)?;
 
-        let mut text = String::new();
-        BufReader::new(&file).read_to_string(&mut text).unwrap();
+        let jar = Vec::new();
 
-        let mut jar = Vec::new();
+        Ok(Self { file, gramma, jar })
+    }
+
+    pub fn add_old(&mut self) -> anyhow::Result<()> {
+        let mut text = String::new();
+        BufReader::new(&self.file)
+            .read_to_string(&mut text)
+            .unwrap();
+
         for line in text.split('\n') {
-            if let Some(cookie) = gramma.cookie(line) {
-                jar.push(cookie);
+            if let Some(cookie) = self.gramma.cookie(line) {
+                self.jar.push(cookie);
             }
         }
 
-        let saves = true;
-
-        Ok(Self {
-            file,
-            gramma,
-            jar,
-            saves,
-        })
+        Ok(())
     }
 
     pub fn add(&mut self, cookie: G::Cookie) {
         self.jar.push(cookie);
     }
 
-    pub fn no_save(&mut self) {
-        self.saves = false;
+    pub fn jar(&self) -> &Vec<G::Cookie> {
+        &self.jar
     }
 
-    pub fn clear(&mut self) {
-        self.jar = Vec::new();
-    }
-
-    pub fn taste(&self) -> Box<dyn Iterator<Item = G::Unique> + '_> {
-        Box::new(self.jar.iter().map(|cookie| self.gramma.taste(cookie)))
-    }
-}
-
-impl<G: Gramma> Drop for CookieJar<G> {
-    fn drop(&mut self) {
-        if !self.saves {
-            return;
-        }
-
+    pub fn save(&mut self) -> anyhow::Result<()> {
         let mut leftovers = Vec::new();
 
         for cookie in std::mem::take(&mut self.jar) {
@@ -93,11 +72,11 @@ impl<G: Gramma> Drop for CookieJar<G> {
 
         let leftovers = leftovers.join("\n");
         let buf = leftovers.as_bytes();
-        let msg = "SOMETHINGS GONE TERRIBLY WRONG!! \
-                   an error occured on write. check for corrupt data.";
 
-        self.file.rewind().expect(msg);
-        self.file.write_all(buf).expect(msg);
-        self.file.set_len(buf.len() as u64).expect(msg);
+        self.file.rewind()?;
+        self.file.write_all(buf)?;
+        self.file.set_len(buf.len() as u64)?;
+
+        Ok(())
     }
 }
