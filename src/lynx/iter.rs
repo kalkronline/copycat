@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::fs::ReadDir;
 use std::path::PathBuf;
 
@@ -6,14 +7,14 @@ type Entry = std::path::PathBuf;
 
 pub struct LynxIter {
     dir: ReadDir,
-    pub exclude: Vec<PathBuf>,
+    pub exclude: HashSet<PathBuf>,
 }
 
 impl LynxIter {
     pub fn new(dir: ReadDir) -> Self {
         Self {
             dir,
-            exclude: Vec::new(),
+            exclude: HashSet::new(),
         }
     }
 

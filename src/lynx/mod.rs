@@ -26,7 +26,9 @@ impl<T> Lynx<T> {
     /// Panics when `self` is not `Todo`.
     pub fn exclude<P: AsRef<Path>>(&mut self, path: P) {
         match self {
-            Todo(iter) => iter.exclude.push(path.as_ref().to_owned()),
+            Todo(iter) => {
+                iter.exclude.insert(path.as_ref().to_owned());
+            }
             _ => panic!(),
         }
     }
@@ -38,7 +40,7 @@ impl<T> Lynx<T> {
         match self {
             Todo(iter) => {
                 for path in paths {
-                    iter.exclude.push(path.as_ref().to_owned());
+                    iter.exclude.insert(path.as_ref().to_owned());
                 }
             }
             _ => panic!(),

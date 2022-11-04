@@ -23,10 +23,11 @@ impl<'a> Kitty<'a> {
         // match
         let mut match_sets: Vec<_> = hashes
             .par_iter()
-            .flat_map(|(hash, id)| {
+            .zip(0..hashes.len())
+            .flat_map(|((hash, id), rest)| {
                 let mut matches: Option<HashSet<usize>> = None;
 
-                for o_hash in &hashes[id + 1..] {
+                for o_hash in &hashes[rest + 1..] {
                     if o_hash.0.dist(hash) < (dist + 1) {
                         if let Some(set) = &mut matches {
                             set.insert(o_hash.1);
