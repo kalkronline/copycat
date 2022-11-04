@@ -37,8 +37,11 @@ fn hash(cookies: &mut CookieJar<HashGramma>) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn matches(cookies: &CookieJar<HashGramma>) {
-    Kitty::new(cookies);
+fn display_matches(cookies: &CookieJar<HashGramma>, dist: u32) {
+    println!("finding matches...");
+    let mow = Kitty::new(cookies, dist);
+    println!("found {} sets of matches!!", mow.matches.len());
+    mow.print();
 }
 
 pub fn run<P: AsRef<Path>>(path: P, opts: Options) -> anyhow::Result<()> {
@@ -51,7 +54,7 @@ pub fn run<P: AsRef<Path>>(path: P, opts: Options) -> anyhow::Result<()> {
     }
 
     hash(&mut cookiejar)?;
-    matches(&cookiejar);
+    display_matches(&cookiejar, opts.distance);
 
     cookiejar.save()?;
 

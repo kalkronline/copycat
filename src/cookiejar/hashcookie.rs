@@ -4,6 +4,7 @@ use image_hasher::{Hasher, ImageHash};
 
 pub struct HashGramma;
 
+#[derive(Debug)]
 pub struct HashCookie {
     pub hash: Option<ImageHash>,
     pub path: PathBuf,

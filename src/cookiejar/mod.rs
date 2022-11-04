@@ -1,5 +1,4 @@
 use std::fs::{File, OpenOptions};
-use std::hash::Hash;
 use std::io::{self, BufReader, Read, Seek, Write};
 use std::path::Path;
 
